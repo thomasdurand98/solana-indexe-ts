@@ -1,14 +1,17 @@
 import { Connection, SlotUpdate } from "@solana/web3.js";
 import WebSocket from "ws";
 import { SolanaConfig, WebSocketMessage } from "../types";
+import { TransactionFetcher } from "./transactionFetcher";
 
 export class SolanaWebSocketClient {
     private ws: WebSocket
     private connection: Connection
     private subscriptionId?: number
+    private transactionFetcher: TransactionFetcher
     
     constructor(private config: SolanaConfig) {
         this.connection = new Connection(config.rpcEndpoint)
+        this.transactionFetcher = new TransactionFetcher(this.connection)
         this.ws = new WebSocket(config.wsEndpoint, {
             rejectUnauthorized: false
         })

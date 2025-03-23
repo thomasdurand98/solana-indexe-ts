@@ -2,16 +2,17 @@ import { Connection, SlotUpdate } from "@solana/web3.js";
 import WebSocket from "ws";
 import { SolanaConfig, WebSocketMessage } from "../types";
 import { TransactionFetcher } from "./transactionFetcher";
+import { BlockFetcher } from "./blockFetcher";
 
 export class SolanaWebSocketClient {
     private ws: WebSocket
     private connection: Connection
     private subscriptionId?: number
-    private transactionFetcher: TransactionFetcher
+    private blockFetcher: BlockFetcher
     
     constructor(private config: SolanaConfig) {
         this.connection = new Connection(config.rpcEndpoint)
-        this.transactionFetcher = new TransactionFetcher(this.connection)
+        this.blockFetcher = new BlockFetcher(this.connection)
         this.ws = new WebSocket(config.wsEndpoint, {
             rejectUnauthorized: false
         })
@@ -68,8 +69,7 @@ export class SolanaWebSocketClient {
 
     private async handleSlotUpdate(slotUpdate: SlotUpdate) {
         console.log('New slot:', slotUpdate.slot);
-        // Here we'll add logic to fetch and process transactions
-        // This is where we'll integrate with other components
+        await this.blockFetcher.fetchBlock(slotUpdate.slot)
     }
 
     public close() {

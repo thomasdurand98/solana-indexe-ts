@@ -1,4 +1,4 @@
-import { ParsedTransactionWithMeta } from '@solana/web3.js';
+import { ParsedInstruction, ParsedTransactionWithMeta, TransactionResponse } from '@solana/web3.js';
 import { DEX_PROGRAM_IDS, CONTRACT_CREATION_PROGRAM_IDS, SPL_TOKEN_PROGRAM_ID, SPL_TOKEN_INITIALIZE_MINT } from '../constants';
 
 export type DexType = keyof typeof DEX_PROGRAM_IDS;
@@ -39,11 +39,25 @@ export class TransactionDetector {
         )
     }
 
-    static isTransfer(transaction: ParsedTransactionWithMeta): boolean {
-        return transaction.transaction.message.instructions.some(instruction => {
-            'parsed' in instruction && 
-            instruction.parsed?.type === 'trasnfer'
-        })
+    static isTransfer(transaction: any): boolean {
+        const instructions = transaction.transaction.message.instructions as any[];
+        
+        if (!instructions || instructions.length === 0) {
+            console.log('No instructions found in transaction:', transaction.transaction.signatures[0]);
+            return false;
+        }
+        
+        return instructions.some((instr: any) => {
+            if ('parsed' in instr && instr.program) {
+                const program = instr.program;
+                const type = instr.parsed?.type;
+                if ((program === 'system' && type === 'transfer') || 
+                    (program === 'spl-token' && (type === 'transfer' || type === 'transferChecked'))) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
     static getDex(transaction: ParsedTransactionWithMeta): DexType | null {
